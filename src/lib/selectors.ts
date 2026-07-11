@@ -1,5 +1,10 @@
-import type { CountryData, RiskRegion, SeverityBand } from "../types/risk";
-import { bandFor } from "../types/risk";
+import type {
+  AlertSeverity,
+  CountryData,
+  RiskRegion,
+  SeverityBand,
+} from "../types/risk";
+import { alertSeverityFor, bandFor } from "../types/risk";
 import type { FilterKey } from "../store/useStore";
 
 // Central match logic shared by the map, filter tabs and alert badge so a region is
@@ -33,6 +38,30 @@ export interface CountrySummary {
   visible: number;
   activeAlerts: number;
   byBand: Record<SeverityBand, number>;
+  byAlert: Record<AlertSeverity, number>; // High/Medium/Low triage counts
+}
+
+// A single hazard classified into the triage layer. `normal` regions are excluded —
+// alertSeverityFor returns null for them, so they never enter the alert stream.
+export interface AlertEvent {
+  region: RiskRegion;
+  severity: AlertSeverity;
+}
+
+// Every region that classifies as an alert (High/Medium/Low), highest priority first
+// then by descending severity index. Feeds the live hazard stream and the badge.
+export function alertEvents(regions: RiskRegion[]): AlertEvent[] {
+  const rank: Record<AlertSeverity, number> = { high: 0, medium: 1, low: 2 };
+  const events: AlertEvent[] = [];
+  for (const region of regions) {
+    const severity = alertSeverityFor(region.severity, region.activeAlert);
+    if (severity) events.push({ region, severity });
+  }
+  return events.sort(
+    (a, b) =>
+      rank[a.severity] - rank[b.severity] ||
+      b.region.severity - a.region.severity
+  );
 }
 
 // Summary over an explicit region set (ADM1 regions or ADM2 districts, depending on
@@ -50,12 +79,18 @@ export function summarizeRegions(
     warning: 0,
     critical: 0,
   };
-  for (const r of regions) byBand[bandFor(r.severity, r.activeAlert).band]++;
+  const byAlert: Record<AlertSeverity, number> = { high: 0, medium: 0, low: 0 };
+  for (const r of regions) {
+    byBand[bandFor(r.severity, r.activeAlert).band]++;
+    const sev = alertSeverityFor(r.severity, r.activeAlert);
+    if (sev) byAlert[sev]++;
+  }
   return {
     total: regions.length,
     visible: visible.length,
     activeAlerts: visible.filter((r) => r.activeAlert).length,
     byBand,
+    byAlert,
   };
 }
 

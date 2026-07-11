@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { MapCanvas } from "./components/Map/MapCanvas";
 import { CountrySelector } from "./components/CountrySelector";
 import { AlertBadge } from "./components/AlertBadge";
+import { AlertStream } from "./components/Alerts/AlertStream";
 import { SearchBar } from "./components/SearchBar";
 import { FilterTabs } from "./components/FilterTabs";
 import { InfoPanel } from "./components/InfoPanel";
@@ -13,6 +15,10 @@ import { useMediaQuery } from "./hooks/useMediaQuery";
 
 export default function App() {
   const isMobile = useMediaQuery("(max-width: 767px)");
+  // Live hazard feed is open by default on desktop (it's the console's live activity
+  // monitor); collapsed on mobile so it doesn't fight the map for space.
+  const [streamOpen, setStreamOpen] = useState(false);
+  useEffect(() => setStreamOpen(!isMobile), [isMobile]);
 
   return (
     <div className="flex h-full flex-col bg-base text-ink">
@@ -39,9 +45,12 @@ export default function App() {
           <CountrySelector />
         </div>
 
-        {/* Alert badge — right */}
+        {/* Alert triage badge — right (also the live-feed launcher) */}
         <div className="md:ml-auto">
-          <AlertBadge />
+          <AlertBadge
+            streamOpen={streamOpen}
+            onToggleStream={() => setStreamOpen((o) => !o)}
+          />
         </div>
       </header>
 
@@ -64,8 +73,12 @@ export default function App() {
 
           {/* Floating controls over the map */}
           <div className="pointer-events-none absolute inset-0">
-            <div className="pointer-events-auto absolute left-3 top-3">
+            <div className="pointer-events-auto absolute left-3 top-3 flex max-h-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col items-start gap-2">
               <Breadcrumb />
+              <AlertStream
+                open={streamOpen}
+                onClose={() => setStreamOpen(false)}
+              />
             </div>
             <div className="pointer-events-auto absolute right-3 top-3">
               <LayerToggles />

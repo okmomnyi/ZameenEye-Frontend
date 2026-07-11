@@ -61,6 +61,16 @@ npm run preview    # serve the production build
   country change and stays fixed while drilling to districts. Images are bundled locally
   (offline-safe) and credited in [`CREDITS.md`](CREDITS.md); swap a file in
   `public/backgrounds/` to change one.
+- **Alert severity triage & live hazard feed:** every hazard is classified into a
+  **High / Medium / Low** priority (derived once in `types/risk.ts` from the severity
+  band, so triage stays in lockstep with the map fill). The header **triage badge**
+  shows the H/M/L breakdown for whatever is on screen and launches the **Live Hazard
+  Feed** — a real-time activity monitor that streams classified hazards in newest-first,
+  color-coded, and lets you click any row to zoom the map to it. The feed's default
+  **"Priority" mode mutes Low-priority noise** so farmers act on what matters — the
+  console's concrete defense against **alert fatigue** — with "Critical" and "All"
+  modes alongside. The stream's liveness is the only simulated part (`useAlertStream`);
+  swap that emitter for the compute team's WebSocket push and the feed UI is unchanged.
 - **Assistant widget:** a floating Q&A assistant (bottom-right) answers questions about
   climate risk and **drives the map** — switching country, applying a filter, or zooming
   to a region/district. The answering logic sits behind a provider seam

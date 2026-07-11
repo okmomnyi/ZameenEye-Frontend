@@ -6,6 +6,8 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSearchIndex, searchIdSet } from "../hooks/useSearchIndex";
 import { summarizeRegions } from "../lib/selectors";
 import {
+  ALERT_SEVERITY,
+  alertSeverityFor,
   bandFor,
   colorFor,
   LANGUAGE_LABEL,
@@ -196,6 +198,7 @@ function RegionView({ region }: { region: RiskRegion }) {
   const focusDistrict = useStore((s) => s.focusDistrict);
   const { byId } = useSearchIndex();
   const band = bandFor(region.severity, region.activeAlert);
+  const alertSev = alertSeverityFor(region.severity, region.activeAlert);
 
   const goTo = (r: RiskRegion) =>
     r.adminLevel === 2 ? focusDistrict(r.id) : focusRegion(r.id);
@@ -221,6 +224,22 @@ function RegionView({ region }: { region: RiskRegion }) {
             <span aria-hidden="true">{RISK_ICON[region.riskType]}</span>
             {RISK_LABEL[region.riskType]}
           </span>
+          {alertSev && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+              style={{
+                backgroundColor: `${ALERT_SEVERITY[alertSev].color}22`,
+                color: ALERT_SEVERITY[alertSev].color,
+              }}
+            >
+              <span
+                className="h-2 w-2 rounded-[2px]"
+                style={{ backgroundColor: ALERT_SEVERITY[alertSev].color }}
+                aria-hidden="true"
+              />
+              {ALERT_SEVERITY[alertSev].label} priority
+            </span>
+          )}
           {region.activeAlert && (
             <span className="animate-flash-in rounded-full bg-band-critical px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white">
               Active Alert
@@ -276,6 +295,14 @@ function RegionView({ region }: { region: RiskRegion }) {
           <span aria-hidden="true">ⓘ</span>
           {region.scoreMethod ?? "Modeled · illustrative (no measured method yet)"}
         </div>
+        {alertSev && (
+          <div
+            className="mt-3 border-l-2 pl-2.5 text-xs leading-snug text-ink"
+            style={{ borderColor: ALERT_SEVERITY[alertSev].color }}
+          >
+            {ALERT_SEVERITY[alertSev].action}
+          </div>
+        )}
       </div>
 
       <div>
